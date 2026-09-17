@@ -66,7 +66,7 @@ export interface Application {
     skills?: string[];
     experience?: number | null;
   };
-  job: {
+  job?: {
     id: string;
     title: string;
     location?: string | null;

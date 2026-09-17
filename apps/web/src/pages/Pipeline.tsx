@@ -21,7 +21,6 @@ const MAIN_STAGES: ApplicationStatus[] = [
 export default function PipelinePage() {
   const [params, setParams] = useSearchParams();
   const [jobId, setJobId] = useState<string>(params.get('job') || '');
-  const [dragOver, setDragOver] = useState<ApplicationStatus | null>(null);
 
   const { data: jobsData } = useJobs({ limit: 100 });
   const { data: pipeline, isLoading } = usePipeline(jobId || undefined);
@@ -29,19 +28,15 @@ export default function PipelinePage() {
 
   // Auto-select first job
   useEffect(() => {
-    if (!jobId && jobsData?.data?.length) {
+    if (!jobId && jobsData?.data && jobsData.data.length > 0) {
       const first = jobsData.data[0].id;
       setJobId(first);
-      setParams({ job: first });
+      setParams({ job: first }, { replace: true });
     }
-  }, [jobId, jobsData, setParams]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [jobId, jobsData?.data?.length]);
 
-  const handleDrop = async (stage: ApplicationStatus, e?: React.DragEvent) => {
-    setDragOver(null);
-    const applicationId = (e as any)?.dataTransfer?.getData?.('applicationId');
-    if (!applicationId) return;
-
-    // Find current stage to avoid no-op
+  const handleMove = async (applicationId: string, stage: ApplicationStatus) => {
     const current = pipeline?.pipeline
       .flatMap((p) => p.candidates)
       .find((c) => c.id === applicationId);
@@ -51,7 +46,11 @@ export default function PipelinePage() {
       await updateStatus.mutateAsync({ id: applicationId, status: stage });
       toast({ title: `Moved to ${stage}`, variant: 'success' });
     } catch (err) {
-      toast({ title: 'Failed to move', description: getApiError(err), variant: 'destructive' });
+      toast({
+        title: 'Failed to move',
+        description: getApiError(err),
+        variant: 'destructive',
+      });
     }
   };
 
@@ -61,11 +60,10 @@ export default function PipelinePage() {
         <div>
           <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight">Pipeline</h1>
           <p className="text-sm text-muted-foreground mt-1">
-            {pipeline?.total ?? 0} candidates across stages · drag to move
+            {pipeline?.total ?? 0} candidates across stages · use card menu to move
           </p>
         </div>
 
-        {/* Job selector */}
         {jobsData && jobsData.data.length > 0 && (
           <div className="relative">
             <select
@@ -115,12 +113,7 @@ export default function PipelinePage() {
                   stage={stage}
                   count={stageData?.count ?? 0}
                   candidates={stageData?.candidates ?? []}
-                  onDrop={(s) => handleDrop(s)}
-                  onDragOver={(e) => {
-                    e.preventDefault();
-                    setDragOver(stage);
-                  }}
-                  isOver={dragOver === stage}
+                  onMove={handleMove}
                 />
               );
             })}

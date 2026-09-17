@@ -20,29 +20,17 @@ export function PipelineColumn({
   stage,
   count,
   candidates,
-  onDrop,
-  onDragOver,
-  isOver,
+  onMove,
 }: {
   stage: ApplicationStatus;
   count: number;
   candidates: Application[];
-  onDrop: (stage: ApplicationStatus) => void;
-  onDragOver: (e: React.DragEvent) => void;
-  isOver: boolean;
+  onMove: (applicationId: string, status: ApplicationStatus) => void;
 }) {
   const config = stageConfig[stage] || { label: stage, accent: '', dot: 'bg-gray-500' };
 
   return (
-    <div
-      onDrop={() => onDrop(stage)}
-      onDragOver={onDragOver}
-      className={cn(
-        'flex flex-col min-w-[280px] w-[280px] rounded-xl transition-all',
-        'bg-white/40 dark:bg-white/5 border border-white/40 dark:border-white/10',
-        isOver && 'ring-2 ring-primary ring-offset-2 bg-primary/5',
-      )}
-    >
+    <div className="flex flex-col min-w-[280px] w-[280px] rounded-xl bg-white/40 dark:bg-white/5 border border-white/40 dark:border-white/10">
       {/* Header */}
       <div className="p-3 border-b border-white/20 dark:border-white/5">
         <div className="flex items-center justify-between">
@@ -59,23 +47,18 @@ export function PipelineColumn({
       </div>
 
       {/* Cards */}
-      <div className="flex-1 p-2 space-y-2 overflow-y-auto min-h-[200px] max-h-[calc(100vh-260px)]">
+      <div className="flex-1 p-2 space-y-2 overflow-visible min-h-[200px] max-h-[calc(100vh-260px)] overflow-y-auto">
         {candidates.length === 0 ? (
           <div className="text-center py-6 text-xs text-muted-foreground">
-            Drop candidates here
+            No candidates
           </div>
         ) : (
           candidates.map((app) => (
-            <div
+            <KanbanCard
               key={app.id}
-              draggable
-              onDragStart={(e) => {
-                e.dataTransfer.setData('applicationId', app.id);
-                e.dataTransfer.effectAllowed = 'move';
-              }}
-            >
-              <KanbanCard application={app} />
-            </div>
+              application={app}
+              onMove={(status) => onMove(app.id, status)}
+            />
           ))
         )}
       </div>
