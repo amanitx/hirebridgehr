@@ -8,7 +8,7 @@ services:
       POSTGRES_PASSWORD: hirebridge_dev_password
       POSTGRES_DB: hirebridge
     ports:
-      - "5432:5432"
+      - "5433:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -22,9 +22,36 @@ services:
     container_name: hirebridge_redis
     restart: unless-stopped
     ports:
-      - "5433:5432"
+      - "6380:6379"
     volumes:
       - redis_data:/data
+
+  api:
+    build:
+      context: ./apps/api
+      dockerfile: Dockerfile
+    container_name: hirebridge_api
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: "postgresql://hirebridge:hirebridge_dev_password@postgres:5432/hirebridge?schema=public"
+      NODE_ENV: production
+      API_PORT: 4000
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_ACCESS_EXPIRES: 15m
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET}
+      JWT_REFRESH_EXPIRES: 7d
+      API_URL: ${API_URL:-http://localhost:4000}
+      WEB_URL: ${WEB_URL:-http://localhost:5173}
+      ADMIN_URL: ${ADMIN_URL:-http://localhost:5174}
+      SUPER_ADMIN_EMAIL: ${SUPER_ADMIN_EMAIL:-admin@hirebridgehr.com}
+      SUPER_ADMIN_PASSWORD: ${SUPER_ADMIN_PASSWORD:-ChangeMe@12345}
+    ports:
+      - "4000:4000"
+    profiles:
+      - production
 
 volumes:
   postgres_data:

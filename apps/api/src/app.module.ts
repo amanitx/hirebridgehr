@@ -13,6 +13,8 @@ import { DistributionModule } from './modules/distribution/distribution.module';
 import { CandidatesModule } from './modules/candidates/candidates.module';
 import { ApplicationsModule } from './modules/applications/applications.module';
 import { InterviewsModule } from './modules/interviews/interviews.module';
+import { AnalyticsModule } from './modules/analytics/analytics.module';
+import { HealthModule } from './modules/health/health.module';
 import configuration from './config/configuration';
 
 @Module({
@@ -40,6 +42,8 @@ import configuration from './config/configuration';
     CandidatesModule,
     ApplicationsModule,
     InterviewsModule,
+    AnalyticsModule,
+    HealthModule,
   ],
 })
 export class AppModule {}
