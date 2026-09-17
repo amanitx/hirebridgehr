@@ -82,3 +82,71 @@ export interface Notification {
   read: boolean;
   createdAt: string;
 }
+
+export type JobStatus =
+  | 'DRAFT'
+  | 'PENDING_ADMIN_PUBLICATION'
+  | 'PROCESSING'
+  | 'PUBLISHED'
+  | 'FAILED'
+  | 'EXPIRED'
+  | 'PAUSED'
+  | 'CLOSED';
+
+export type Platform = 'CAREER_PAGE' | 'LINKEDIN' | 'INDEED' | 'NAUKRI' | 'GOOGLE_JOBS' | 'CUSTOM';
+
+export type WorkMode = 'REMOTE' | 'HYBRID' | 'ONSITE';
+export type EmploymentType = 'FULL_TIME' | 'PART_TIME' | 'CONTRACT' | 'INTERNSHIP';
+
+export interface Client {
+  id: string;
+  companyName: string;
+}
+
+export interface JobDistribution {
+  id: string;
+  platform: Platform;
+  status: string;
+  requestedAt: string;
+  publishedAt: string | null;
+  externalJobId: string | null;
+  errorMessage: string | null;
+}
+
+export interface Job {
+  id: string;
+  title: string;
+  department?: string | null;
+  clientId?: string | null;
+  client?: Client | null;
+  location?: string | null;
+  workMode: WorkMode;
+  employmentType: EmploymentType;
+  experienceMin?: number | null;
+  experienceMax?: number | null;
+  salaryMin?: number | null;
+  salaryMax?: number | null;
+  currency?: string | null;
+  description?: string | null;
+  requirements?: string | null;
+  responsibilities?: string | null;
+  benefits?: string | null;
+  skills: string[];
+  applicationDeadline?: string | null;
+  status: JobStatus;
+  createdAt: string;
+  updatedAt: string;
+  applicationsCount?: number;
+  distributions?: JobDistribution[];
+  _count?: { applications: number };
+}
+
+export interface Paginated<T> {
+  data: T[];
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+  };
+}

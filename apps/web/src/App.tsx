@@ -10,6 +10,7 @@ import ResetPasswordPage from '@/pages/ResetPassword';
 import VerifyEmailPage from '@/pages/VerifyEmail';
 import DashboardPage from '@/pages/Dashboard';
 import JobsListPage from '@/pages/jobs/List';
+import JobDetailPage from '@/pages/jobs/Detail';
 import CandidatesListPage from '@/pages/candidates/List';
 import InterviewsListPage from '@/pages/interviews/List';
 import PipelinePage from '@/pages/Pipeline';
@@ -30,10 +31,7 @@ function PublicRoute({ children }: { children: React.ReactNode }) {
 
 export default function App() {
   const hydrate = useAuthStore((s) => s.hydrate);
-
-  useEffect(() => {
-    hydrate();
-  }, [hydrate]);
+  useEffect(() => { hydrate(); }, [hydrate]);
 
   return (
     <>
@@ -47,6 +45,7 @@ export default function App() {
         <Route element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
           <Route path="/" element={<DashboardPage />} />
           <Route path="/jobs" element={<JobsListPage />} />
+          <Route path="/jobs/:id" element={<JobDetailPage />} />
           <Route path="/candidates" element={<CandidatesListPage />} />
           <Route path="/pipeline" element={<PipelinePage />} />
           <Route path="/interviews" element={<InterviewsListPage />} />
