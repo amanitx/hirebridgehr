@@ -17,6 +17,7 @@ import InterviewsListPage from '@/pages/interviews/List';
 import PipelinePage from '@/pages/Pipeline';
 import AnalyticsPage from '@/pages/Analytics';
 import SettingsPage from '@/pages/settings/Settings';
+import NotificationsPage from '@/pages/Notifications';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const isAuth = useAuthStore((s) => s.isAuthenticated);
@@ -52,6 +53,7 @@ export default function App() {
           <Route path="/pipeline" element={<PipelinePage />} />
           <Route path="/interviews" element={<InterviewsListPage />} />
           <Route path="/analytics" element={<AnalyticsPage />} />
+          <Route path="/notifications" element={<NotificationsPage />} />
           <Route path="/settings" element={<SettingsPage />} />
         </Route>
 

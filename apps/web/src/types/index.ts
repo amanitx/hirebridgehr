@@ -206,3 +206,60 @@ export interface PipelineResponse {
   rejected: { count: number; candidates: Application[] };
   withdrawn: { count: number; candidates: Application[] };
 }
+
+export type InterviewStatus = 'SCHEDULED' | 'COMPLETED' | 'CANCELLED' | 'RESCHEDULED';
+export type Recommendation = 'STRONG_HIRE' | 'HIRE' | 'MAYBE' | 'NO_HIRE';
+
+export interface Interview {
+  id: string;
+  candidateId: string;
+  jobId: string;
+  interviewerId: string;
+  scheduledAt: string;
+  durationMin: number;
+  type: string;
+  meetingLink: string | null;
+  notes: string | null;
+  status: InterviewStatus;
+  createdAt: string;
+  candidate?: {
+    id: string;
+    name: string;
+    email: string | null;
+    phone: string | null;
+    skills: string[];
+    experience: number | null;
+  };
+  job?: { id: string; title: string; location?: string | null };
+  interviewer?: { id: string; name: string; email: string };
+  feedback?: InterviewFeedback[];
+}
+
+export interface InterviewFeedback {
+  id: string;
+  interviewId: string;
+  interviewerId: string;
+  technical: number;
+  communication: number;
+  problemSolving: number;
+  experience: number;
+  overall: number;
+  recommendation: Recommendation;
+  comments: string | null;
+  createdAt: string;
+  interviewer?: { id: string; name: string; email: string };
+}
+
+export interface TeamMember {
+  id: string;
+  role: string;
+  createdAt: string;
+  user: {
+    id: string;
+    name: string;
+    email: string;
+    emailVerified: boolean;
+    lastLoginAt: string | null;
+    createdAt: string;
+  };
+}
