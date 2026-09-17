@@ -10,14 +10,14 @@ import { PipelineFunnel } from '@/components/dashboard/PipelineFunnel';
 import { RecentApplications } from '@/components/dashboard/RecentApplications';
 import { AttentionRequired } from '@/components/dashboard/AttentionRequired';
 import { useAnalyticsOverview, usePipelineConversion } from '@/hooks/useAnalytics';
-import { useApplications } from '@/hooks/useApplications';
+import { useRecentApplications } from '@/hooks/useDashboardApplications';
 import { useAuthStore } from '@/store/auth';
 
 export default function DashboardPage() {
   const user = useAuthStore((s) => s.user);
   const { data: overview, isLoading: overviewLoading } = useAnalyticsOverview();
   const { data: pipeline, isLoading: pipelineLoading } = usePipelineConversion();
-  const { data: applications, isLoading: appsLoading } = useApplications(5);
+  const { data: applications, isLoading: appsLoading } = useRecentApplications(5);
 
   return (
     <div className="space-y-6 animate-fade-in">

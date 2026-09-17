@@ -150,3 +150,59 @@ export interface Paginated<T> {
     totalPages: number;
   };
 }
+
+export type ApplicationStatus =
+  | 'NEW'
+  | 'SCREENING'
+  | 'SHORTLISTED'
+  | 'INTERVIEW'
+  | 'OFFER'
+  | 'HIRED'
+  | 'REJECTED'
+  | 'WITHDRAWN';
+
+export type Source =
+  | 'LINKEDIN'
+  | 'CAREER_PAGE'
+  | 'EMAIL'
+  | 'REFERRAL'
+  | 'MANUAL'
+  | 'API'
+  | 'WEBHOOK'
+  | 'JOB_BOARD'
+  | 'CSV';
+
+export interface Candidate {
+  id: string;
+  name: string;
+  email: string | null;
+  phone: string | null;
+  location: string | null;
+  skills: string[];
+  experience: number | null;
+  education: string | null;
+  source: Source;
+  tags: string[];
+  notes: string | null;
+  ownerId: string | null;
+  owner?: { id: string; name: string; email: string } | null;
+  createdAt: string;
+  updatedAt: string;
+  applicationsCount?: number;
+  applications?: Application[];
+  documentsCount?: number;
+}
+
+export interface PipelineStageData {
+  stage: ApplicationStatus;
+  count: number;
+  candidates: Application[];
+}
+
+export interface PipelineResponse {
+  job: { id: string; title: string };
+  total: number;
+  pipeline: PipelineStageData[];
+  rejected: { count: number; candidates: Application[] };
+  withdrawn: { count: number; candidates: Application[] };
+}

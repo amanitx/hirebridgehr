@@ -12,6 +12,7 @@ import DashboardPage from '@/pages/Dashboard';
 import JobsListPage from '@/pages/jobs/List';
 import JobDetailPage from '@/pages/jobs/Detail';
 import CandidatesListPage from '@/pages/candidates/List';
+import CandidateDetailPage from '@/pages/candidates/Detail';
 import InterviewsListPage from '@/pages/interviews/List';
 import PipelinePage from '@/pages/Pipeline';
 import AnalyticsPage from '@/pages/Analytics';
@@ -47,6 +48,7 @@ export default function App() {
           <Route path="/jobs" element={<JobsListPage />} />
           <Route path="/jobs/:id" element={<JobDetailPage />} />
           <Route path="/candidates" element={<CandidatesListPage />} />
+          <Route path="/candidates/:id" element={<CandidateDetailPage />} />
           <Route path="/pipeline" element={<PipelinePage />} />
           <Route path="/interviews" element={<InterviewsListPage />} />
           <Route path="/analytics" element={<AnalyticsPage />} />
