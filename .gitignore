@@ -45,3 +45,6 @@ apps/api/.env
 apps/web/.env
 apps/admin/.env
 apps/web/.env
+apps/admin/.env
+apps/admin/node_modules/
+apps/admin/dist/
