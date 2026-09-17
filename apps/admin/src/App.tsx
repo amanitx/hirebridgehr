@@ -7,7 +7,8 @@ import LoginPage from '@/pages/Login';
 import DashboardPage from '@/pages/Dashboard';
 import QueuePage from '@/pages/Queue';
 import DistributionsPage from '@/pages/Distributions';
-import OrganizationsPage from '@/pages/Organizations';
+import OrganizationsListPage from '@/pages/organizations/List';
+import OrganizationDetailPage from '@/pages/organizations/Detail';
 import AnalyticsPage from '@/pages/Analytics';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -35,7 +36,8 @@ export default function App() {
           <Route path="/" element={<DashboardPage />} />
           <Route path="/queue" element={<QueuePage />} />
           <Route path="/distributions" element={<DistributionsPage />} />
-          <Route path="/organizations" element={<OrganizationsPage />} />
+          <Route path="/organizations" element={<OrganizationsListPage />} />
+          <Route path="/organizations/:id" element={<OrganizationDetailPage />} />
           <Route path="/analytics" element={<AnalyticsPage />} />
         </Route>
 

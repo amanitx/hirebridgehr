@@ -35,6 +35,7 @@ export class AdminDistributionController {
   getAll(
     @CurrentUser() user: any,
     @Query('status') status?: string,
+    @Query('platform') platform?: string,
   ) {
     this.assertSuperAdmin(user);
     let parsedStatus: DistributionStatus | undefined;
@@ -44,7 +45,7 @@ export class AdminDistributionController {
       }
       parsedStatus = status as DistributionStatus;
     }
-    return this.distribution.getAllDistributions(parsedStatus);
+    return this.distribution.getAllDistributions(parsedStatus, platform);
   }
 
   @Post('distributions/:id/mark-published')
@@ -67,4 +68,23 @@ export class AdminDistributionController {
     if (!reason) throw new BadRequestException('Reason is required');
     return this.distribution.reject(id, user.id, reason);
   }
+
+  @Get('organizations')
+  async listOrganizations(
+    @CurrentUser() user: any,
+    @Query('search') search?: string,
+  ) {
+    this.assertSuperAdmin(user);
+    return this.distribution.listAllOrganizations(search);
+  }
+
+  @Get('organizations/:id')
+  async getOrganization(
+    @CurrentUser() user: any,
+    @Param('id') id: string,
+  ) {
+    this.assertSuperAdmin(user);
+    return this.distribution.getOrganizationDetail(id);
+  }
+
 }

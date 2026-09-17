@@ -176,9 +176,13 @@ export class DistributionService {
   /**
    * ADMIN: List all distributions (with optional status filter).
    */
-  async getAllDistributions(status?: DistributionStatus) {
+  async getAllDistributions(status?: DistributionStatus, platform?: string) {
+    const where: any = {};
+    if (status) where.status = status;
+    if (platform) where.platform = platform;
+
     return this.prisma.jobDistribution.findMany({
-      where: status ? { status } : {},
+      where,
       orderBy: { requestedAt: 'desc' },
       take: 100,
       include: {
@@ -276,4 +280,61 @@ export class DistributionService {
 
     return updated;
   }
+
+  /**
+   * ADMIN: List all organizations with counts.
+   */
+  async listAllOrganizations(search?: string) {
+    const where = search
+      ? {
+          OR: [
+            { name: { contains: search, mode: 'insensitive' as const } },
+            { slug: { contains: search, mode: 'insensitive' as const } },
+          ],
+        }
+      : {};
+
+    return this.prisma.organization.findMany({
+      where,
+      orderBy: { createdAt: 'desc' },
+      take: 200,
+      include: {
+        _count: {
+          select: {
+            users: true,
+            jobs: true,
+            candidates: true,
+            applications: true,
+          },
+        },
+      },
+    });
+  }
+
+  /**
+   * ADMIN: Get one organization with details and members.
+   */
+  async getOrganizationDetail(id: string) {
+    return this.prisma.organization.findUnique({
+      where: { id },
+      include: {
+        users: {
+          include: {
+            user: {
+              select: { id: true, name: true, email: true },
+            },
+          },
+        },
+        _count: {
+          select: {
+            users: true,
+            jobs: true,
+            candidates: true,
+            applications: true,
+          },
+        },
+      },
+    });
+  }
+
 }

@@ -13,13 +13,16 @@ export function usePublishingQueue() {
   });
 }
 
-export function useAllDistributions(status?: string) {
+export function useAllDistributions(status?: string, platform?: string) {
+  const params = new URLSearchParams();
+  if (status && status !== 'ALL') params.set('status', status);
+  if (platform && platform !== 'ALL') params.set('platform', platform);
+
   return useQuery({
-    queryKey: ['admin', 'distributions', status],
+    queryKey: ['admin', 'distributions', status, platform],
     queryFn: async () => {
-      const url = status ? `/admin/distributions?status=${status}` : '/admin/distributions';
-      const { data } = await api.get(url);
-      return data.data;
+      const { data } = await api.get(`/admin/distributions?${params.toString()}`);
+      return data.data as any[];
     },
   });
 }
@@ -31,6 +34,29 @@ export function usePlatformStats() {
       const { data } = await api.get('/admin/analytics');
       return data.data as PlatformStats;
     },
+  });
+}
+
+export function useAllOrganizations(search?: string) {
+  return useQuery({
+    queryKey: ['admin', 'organizations', search],
+    queryFn: async () => {
+      const params = new URLSearchParams();
+      if (search) params.set('search', search);
+      const { data } = await api.get(`/admin/organizations?${params.toString()}`);
+      return data.data as any[];
+    },
+  });
+}
+
+export function useOrganizationDetail(id: string | undefined) {
+  return useQuery({
+    queryKey: ['admin', 'organization', id],
+    queryFn: async () => {
+      const { data } = await api.get(`/admin/organizations/${id}`);
+      return data.data;
+    },
+    enabled: !!id,
   });
 }
 
