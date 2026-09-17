@@ -1,0 +1,465 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ==========================================
+// PLATFORM
+// ==========================================
+
+model Organization {
+  id            String   @id @default(cuid())
+  name          String
+  type          OrgType
+  slug          String   @unique
+  domain        String?
+  logoUrl       String?
+  industry      String?
+  size          String?
+  website       String?
+  phone         String?
+  address       String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  users         OrganizationUser[]
+  clients       Client[]
+  jobs          Job[]
+  candidates    Candidate[]
+  applications  Application[]
+  interviews    Interview[]
+  notifications Notification[]
+  activityLogs  ActivityLog[]
+  distributions JobDistribution[]
+  subscription  Subscription?
+
+  @@index([slug])
+}
+
+enum OrgType {
+  CORPORATE
+  AGENCY
+  STAFFING
+  STARTUP
+}
+
+// ==========================================
+// USERS & AUTH
+// ==========================================
+
+model User {
+  id                String    @id @default(cuid())
+  email             String    @unique
+  passwordHash      String
+  name              String
+  emailVerified     Boolean   @default(false)
+  emailVerifyToken  String?
+  resetToken        String?
+  resetTokenExpiry  DateTime?
+  isSuperAdmin      Boolean   @default(false)
+  lastLoginAt       DateTime?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  organizations     OrganizationUser[]
+  ownedCandidates   Candidate[]        @relation("CandidateOwner")
+  activityLogs      ActivityLog[]
+  interviewFeedback InterviewFeedback[]
+  interviewsAsInt   Interview[]        @relation("Interviewer")
+
+  @@index([email])
+}
+
+model OrganizationUser {
+  id             String   @id @default(cuid())
+  organizationId String
+  userId         String
+  role           Role
+  createdAt      DateTime @default(now())
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([organizationId, userId])
+  @@index([organizationId])
+  @@index([userId])
+}
+
+enum Role {
+  OWNER
+  ADMIN
+  RECRUITER
+  HIRING_MANAGER
+  INTERVIEWER
+  VIEWER
+}
+
+// ==========================================
+// CLIENTS (Agency mode)
+// ==========================================
+
+model Client {
+  id             String   @id @default(cuid())
+  organizationId String
+  companyName    String
+  contactName    String?
+  email          String?
+  phone          String?
+  industry       String?
+  notes          String?
+  status         String   @default("ACTIVE")
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  jobs         Job[]
+
+  @@index([organizationId])
+}
+
+// ==========================================
+// JOBS
+// ==========================================
+
+model Job {
+  id                  String         @id @default(cuid())
+  organizationId      String
+  clientId            String?
+  title               String
+  department          String?
+  location            String?
+  workMode            WorkMode       @default(ONSITE)
+  employmentType      EmploymentType @default(FULL_TIME)
+  experienceMin       Int?
+  experienceMax       Int?
+  salaryMin           Int?
+  salaryMax           Int?
+  currency            String?        @default("INR")
+  description         String?
+  requirements        String?
+  responsibilities    String?
+  benefits            String?
+  skills              String[]
+  applicationDeadline DateTime?
+  status              JobStatus      @default(DRAFT)
+  createdById         String?
+  createdAt           DateTime       @default(now())
+  updatedAt           DateTime       @updatedAt
+
+  organization  Organization      @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  client        Client?           @relation(fields: [clientId], references: [id])
+  applications  Application[]
+  distributions JobDistribution[]
+  interviews    Interview[]
+
+  @@index([organizationId])
+  @@index([status])
+  @@index([organizationId, status])
+}
+
+enum WorkMode {
+  REMOTE
+  HYBRID
+  ONSITE
+}
+
+enum EmploymentType {
+  FULL_TIME
+  PART_TIME
+  CONTRACT
+  INTERNSHIP
+}
+
+enum JobStatus {
+  DRAFT
+  PENDING_ADMIN_PUBLICATION
+  PROCESSING
+  PUBLISHED
+  FAILED
+  EXPIRED
+  PAUSED
+  CLOSED
+}
+
+// ==========================================
+// JOB DISTRIBUTION
+// ==========================================
+
+model JobDistribution {
+  id             String             @id @default(cuid())
+  organizationId String
+  jobId          String
+  platform       Platform
+  status         DistributionStatus @default(PENDING_ADMIN_PUBLICATION)
+  requestedAt    DateTime           @default(now())
+  publishedAt    DateTime?
+  externalJobId  String?
+  errorMessage   String?
+  requestedById  String?
+  updatedAt      DateTime           @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  job          Job          @relation(fields: [jobId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId])
+  @@index([status])
+  @@index([jobId])
+}
+
+enum Platform {
+  CAREER_PAGE
+  LINKEDIN
+  INDEED
+  NAUKRI
+  GOOGLE_JOBS
+  CUSTOM
+}
+
+enum DistributionStatus {
+  DRAFT
+  PENDING_ADMIN_PUBLICATION
+  PROCESSING
+  PUBLISHED
+  FAILED
+  EXPIRED
+  CLOSED
+}
+
+// ==========================================
+// CANDIDATES
+// ==========================================
+
+model Candidate {
+  id             String   @id @default(cuid())
+  organizationId String
+  name           String
+  email          String?
+  phone          String?
+  location       String?
+  skills         String[]
+  experience     Int?
+  education      String?
+  source         Source   @default(MANUAL)
+  tags           String[]
+  notes          String?
+  ownerId        String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  organization Organization        @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  owner        User?               @relation("CandidateOwner", fields: [ownerId], references: [id])
+  documents    CandidateDocument[]
+  applications Application[]
+
+  @@index([organizationId])
+  @@index([email])
+  @@index([organizationId, email])
+}
+
+enum Source {
+  LINKEDIN
+  CAREER_PAGE
+  EMAIL
+  REFERRAL
+  MANUAL
+  API
+  WEBHOOK
+  JOB_BOARD
+  CSV
+}
+
+model CandidateDocument {
+  id          String   @id @default(cuid())
+  candidateId String
+  fileName    String
+  fileKey     String
+  mimeType    String
+  sizeBytes   Int
+  uploadedAt  DateTime @default(now())
+
+  candidate Candidate @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+
+  @@index([candidateId])
+}
+
+// ==========================================
+// APPLICATIONS
+// ==========================================
+
+model Application {
+  id             String            @id @default(cuid())
+  organizationId String
+  candidateId    String
+  jobId          String
+  source         Source
+  status         ApplicationStatus @default(NEW)
+  appliedAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  candidate    Candidate    @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+  job          Job          @relation(fields: [jobId], references: [id], onDelete: Cascade)
+
+  @@unique([candidateId, jobId])
+  @@index([organizationId])
+  @@index([status])
+  @@index([organizationId, status])
+  @@index([jobId])
+}
+
+enum ApplicationStatus {
+  NEW
+  SCREENING
+  SHORTLISTED
+  INTERVIEW
+  OFFER
+  HIRED
+  REJECTED
+  WITHDRAWN
+}
+
+// ==========================================
+// INTERVIEWS
+// ==========================================
+
+model Interview {
+  id             String          @id @default(cuid())
+  organizationId String
+  candidateId    String
+  jobId          String
+  interviewerId  String
+  scheduledAt    DateTime
+  durationMin    Int             @default(60)
+  type           String          @default("VIDEO")
+  meetingLink    String?
+  notes          String?
+  status         InterviewStatus @default(SCHEDULED)
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+
+  organization Organization        @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  job          Job                 @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  interviewer  User                @relation("Interviewer", fields: [interviewerId], references: [id])
+  feedback     InterviewFeedback[]
+
+  @@index([organizationId])
+  @@index([status])
+}
+
+enum InterviewStatus {
+  SCHEDULED
+  COMPLETED
+  CANCELLED
+  RESCHEDULED
+}
+
+model InterviewFeedback {
+  id             String         @id @default(cuid())
+  interviewId    String
+  interviewerId  String
+  technical      Int
+  communication  Int
+  problemSolving Int
+  experience     Int
+  overall        Int
+  recommendation Recommendation
+  comments       String?
+  createdAt      DateTime       @default(now())
+
+  interview   Interview @relation(fields: [interviewId], references: [id], onDelete: Cascade)
+  interviewer User      @relation(fields: [interviewerId], references: [id])
+
+  @@index([interviewId])
+}
+
+enum Recommendation {
+  STRONG_HIRE
+  HIRE
+  MAYBE
+  NO_HIRE
+}
+
+// ==========================================
+// NOTIFICATIONS & ACTIVITY
+// ==========================================
+
+model Notification {
+  id             String   @id @default(cuid())
+  organizationId String
+  userId         String
+  title          String
+  body           String?
+  type           String
+  link           String?
+  read           Boolean  @default(false)
+  createdAt      DateTime @default(now())
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId, userId])
+  @@index([userId, read])
+}
+
+model ActivityLog {
+  id             String   @id @default(cuid())
+  organizationId String
+  userId         String?
+  action         String
+  entityType     String
+  entityId       String
+  metadata       Json?
+  createdAt      DateTime @default(now())
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user         User?         @relation(fields: [userId], references: [id])
+
+  @@index([organizationId])
+  @@index([entityType, entityId])
+}
+
+// ==========================================
+// BILLING (basic)
+// ==========================================
+
+model Plan {
+  id           String   @id @default(cuid())
+  name         String
+  priceMonthly Int
+  features     Json
+  createdAt    DateTime @default(now())
+
+  subscriptions Subscription[]
+}
+
+model Subscription {
+  id             String    @id @default(cuid())
+  organizationId String    @unique
+  planId         String
+  status         String    @default("ACTIVE")
+  startedAt      DateTime  @default(now())
+  renewsAt       DateTime?
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  plan         Plan         @relation(fields: [planId], references: [id])
+}
+
+// ==========================================
+// EMAIL EVENTS
+// ==========================================
+
+model EmailEvent {
+  id             String   @id @default(cuid())
+  organizationId String?
+  to             String
+  subject        String
+  template       String
+  status         String   @default("SENT")
+  errorMessage   String?
+  sentAt         DateTime @default(now())
+
+  @@index([organizationId])
+}

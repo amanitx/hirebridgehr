@@ -1,0 +1,46 @@
+node_modules/
+dist/
+build/
+.next/
+out/
+.env
+.env.local
+.env.*.local
+!.env.example
+*.log
+npm-debug.log*
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.swp
+uploads/
+storage/
+*.sqlite
+*.db
+coverage/
+.nyc_output/
+.turbo/
+.cache/
+docker-compose.override.yml
+
+# Build output
+apps/api/dist/
+apps/web/dist/
+apps/admin/dist/
+
+# Dependencies
+apps/api/node_modules/
+apps/web/node_modules/
+apps/admin/node_modules/
+
+# Prisma generated
+apps/api/node_modules/.prisma/
+apps/api/node_modules/@prisma/
+
+# Env
+.env
+.env.local
+apps/api/.env
+apps/web/.env
+apps/admin/.env
