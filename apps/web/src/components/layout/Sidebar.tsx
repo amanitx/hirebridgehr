@@ -107,9 +107,9 @@ export function Sidebar({
         </nav>
 
         {/* Footer */}
-        <div className="p-4 border-t border-white/20 dark:border-white/5">
+        <div className="p-3 border-t border-white/20 dark:border-white/5">
           <p className="text-[10px] text-muted-foreground text-center">
-            HirebridgeHR v0.1.0
+            v0.1.0
           </p>
         </div>
       </aside>

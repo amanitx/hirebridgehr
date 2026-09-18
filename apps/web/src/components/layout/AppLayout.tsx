@@ -19,7 +19,7 @@ export function AppLayout() {
 
       <div className="lg:pl-64">
         <Header onOpenMobile={() => setMobileOpen(true)} />
-        <main className="p-4 sm:p-6 lg:p-8 max-w-[1600px] mx-auto">
+        <main className="p-4 sm:p-6 lg:p-8">
           <Outlet />
         </main>
       </div>
