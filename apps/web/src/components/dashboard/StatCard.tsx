@@ -23,14 +23,18 @@ export function StatCard({
   };
 
   return (
-    <div className="glass-card rounded-xl p-5 transition-all hover:shadow-md">
+    <div className="glass-card rounded-xl p-5 transition-all hover:shadow-md hover:border-primary/30 cursor-pointer h-full">
       <div className="flex items-start justify-between">
         <div className="flex-1">
           <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
             {label}
           </p>
           <p className="text-2xl font-semibold tracking-tight mt-2">
-            {loading ? <span className="inline-block h-7 w-12 bg-muted rounded animate-pulse" /> : value}
+            {loading ? (
+              <span className="inline-block h-7 w-12 bg-muted rounded animate-pulse" />
+            ) : (
+              value
+            )}
           </p>
         </div>
         <div className={cn('h-10 w-10 rounded-lg flex items-center justify-center', accents[accent])}>
