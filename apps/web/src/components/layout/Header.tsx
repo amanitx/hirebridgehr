@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import {
   Bell,
@@ -6,25 +6,101 @@ import {
   LogOut,
   User as UserIcon,
   Search,
+  Briefcase,
+  Users as UsersIcon,
+  X,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useAuthStore } from '@/store/auth';
 import { useNotifications, useUnreadCount, useMarkAllRead } from '@/hooks/useNotifications';
+import { useCandidates } from '@/hooks/useCandidates';
+import { useJobs } from '@/hooks/useJobs';
 import { cn, relativeTime } from '@/lib/utils';
 
 export function Header({ onOpenMobile }: { onOpenMobile: () => void }) {
   const [notifOpen, setNotifOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [debouncedQuery, setDebouncedQuery] = useState('');
+
+  const searchRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
   const { user, logout } = useAuthStore();
   const { data: notifications = [] } = useNotifications();
   const { data: unreadCount = 0 } = useUnreadCount();
   const markAllRead = useMarkAllRead();
 
+  // Debounce search
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedQuery(searchQuery), 250);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
+  // Fetch suggestions
+  const { data: candidatesData, isLoading: candidatesLoading } = useCandidates({
+    search: debouncedQuery || undefined,
+    limit: 5,
+  });
+  const { data: jobsData, isLoading: jobsLoading } = useJobs({
+    search: debouncedQuery || undefined,
+    limit: 5,
+  });
+
+  const hasResults =
+    debouncedQuery.length >= 2 &&
+    ((candidatesData?.data?.length ?? 0) > 0 || (jobsData?.data?.length ?? 0) > 0);
+
+  // Close on outside click
+  useEffect(() => {
+    function handleClick(e: MouseEvent) {
+      if (searchRef.current && !searchRef.current.contains(e.target as Node)) {
+        setSearchOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, []);
+
+  // Keyboard shortcut: Cmd/Ctrl + K
+  useEffect(() => {
+    function handleKey(e: KeyboardEvent) {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault();
+        setSearchOpen(true);
+        setTimeout(() => {
+          (document.querySelector('input[data-search-input]') as HTMLInputElement)?.focus();
+        }, 50);
+      }
+      if (e.key === 'Escape') {
+        setSearchOpen(false);
+      }
+    }
+    document.addEventListener('keydown', handleKey);
+    return () => document.removeEventListener('keydown', handleKey);
+  }, []);
+
   const handleLogout = () => {
     logout();
     navigate('/login');
+  };
+
+  const goToCandidate = (id: string) => {
+    setSearchQuery('');
+    setSearchOpen(false);
+    navigate(`/candidates/${id}`);
+  };
+
+  const goToJob = (id: string) => {
+    setSearchQuery('');
+    setSearchOpen(false);
+    navigate(`/jobs/${id}`);
+  };
+
+  const clearSearch = () => {
+    setSearchQuery('');
+    setDebouncedQuery('');
   };
 
   return (
@@ -39,14 +115,101 @@ export function Header({ onOpenMobile }: { onOpenMobile: () => void }) {
         </button>
 
         {/* Search */}
-        <div className="hidden md:flex items-center gap-2 flex-1 max-w-md">
-          <div className="relative w-full">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+        <div ref={searchRef} className="hidden md:block flex-1 max-w-md relative">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
             <Input
-              placeholder="Search candidates, jobs..."
-              className="pl-9 bg-white/40 dark:bg-white/5 border-white/40 dark:border-white/10"
+              data-search-input
+              placeholder="Search candidates, jobs... (Ctrl+K)"
+              className="pl-9 pr-9 bg-white/40 dark:bg-white/5 border-white/40 dark:border-white/10"
+              value={searchQuery}
+              onChange={(e) => {
+                setSearchQuery(e.target.value);
+                setSearchOpen(true);
+              }}
+              onFocus={() => setSearchOpen(true)}
             />
+            {searchQuery && (
+              <button
+                onClick={clearSearch}
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1 rounded hover:bg-white/60"
+              >
+                <X className="h-3.5 w-3.5 text-muted-foreground" />
+              </button>
+            )}
           </div>
+
+          {/* Suggestions dropdown */}
+          {searchOpen && debouncedQuery.length >= 2 && (
+            <div className="absolute top-12 left-0 right-0 z-50 glass-card rounded-xl shadow-xl overflow-hidden max-h-[60vh] overflow-y-auto">
+              {/* Candidates */}
+              {candidatesLoading ? (
+                <div className="p-3 text-center text-xs text-muted-foreground">
+                  Searching...
+                </div>
+              ) : (
+                <>
+                  {candidatesData?.data && candidatesData.data.length > 0 && (
+                    <div>
+                      <div className="px-3 py-2 text-[10px] font-semibold text-muted-foreground uppercase tracking-wider border-b border-white/10">
+                        Candidates
+                      </div>
+                      {candidatesData.data.map((c) => (
+                        <button
+                          key={c.id}
+                          onClick={() => goToCandidate(c.id)}
+                          className="w-full flex items-center gap-3 px-3 py-2 hover:bg-white/40 dark:hover:bg-white/5 text-left transition-colors"
+                        >
+                          <div className="h-8 w-8 rounded-full bg-violet-500/10 flex items-center justify-center shrink-0">
+                            <UsersIcon className="h-3.5 w-3.5 text-violet-600" />
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <p className="text-sm font-medium truncate">{c.name}</p>
+                            <p className="text-xs text-muted-foreground truncate">
+                              {c.email || c.phone || 'No contact'}
+                            </p>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Jobs */}
+                  {jobsData?.data && jobsData.data.length > 0 && (
+                    <div>
+                      <div className="px-3 py-2 text-[10px] font-semibold text-muted-foreground uppercase tracking-wider border-b border-white/10 border-t">
+                        Jobs
+                      </div>
+                      {jobsData.data.map((j) => (
+                        <button
+                          key={j.id}
+                          onClick={() => goToJob(j.id)}
+                          className="w-full flex items-center gap-3 px-3 py-2 hover:bg-white/40 dark:hover:bg-white/5 text-left transition-colors"
+                        >
+                          <div className="h-8 w-8 rounded-lg bg-blue-500/10 flex items-center justify-center shrink-0">
+                            <Briefcase className="h-3.5 w-3.5 text-blue-600" />
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <p className="text-sm font-medium truncate">{j.title}</p>
+                            <p className="text-xs text-muted-foreground truncate">
+                              {j.location || 'No location'}
+                            </p>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* No results */}
+                  {!candidatesLoading && !jobsLoading && !hasResults && (
+                    <div className="p-6 text-center text-sm text-muted-foreground">
+                      No results for "{debouncedQuery}"
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+          )}
         </div>
 
         <div className="flex-1 md:hidden" />
@@ -118,7 +281,7 @@ export function Header({ onOpenMobile }: { onOpenMobile: () => void }) {
           )}
         </div>
 
-        {/* User menu */}
+        {/* User menu — top-right */}
         <div className="relative">
           <button
             onClick={() => {
