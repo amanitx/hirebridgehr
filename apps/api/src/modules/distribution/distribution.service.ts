@@ -106,7 +106,7 @@ export class DistributionService {
             where: { id: dist.id },
             data: {
               status: DistributionStatus.FAILED,
-              errorMessage: err.message,
+              errorMessage: err instanceof Error ? err.message : 'Unknown error',
             },
           });
         }
